@@ -121,7 +121,8 @@
       border-left: 3px solid var(--primary-color);
     }
 
-    .loading {
+    /* Estados de carga */
+    .loading-state {
       text-align: center;
       padding: 40px;
       font-size: 18px;
@@ -136,6 +137,19 @@
       height: 40px;
       animation: spin 1s linear infinite;
       margin: 0 auto 20px;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .error-message {
+      background-color: #f8d7da;
+      color: #721c24;
+      padding: 15px;
+      border-radius: var(--border-radius);
+      margin: 20px 0;
+      text-align: center;
     }
 
     @keyframes spin {
@@ -173,27 +187,21 @@
     </div>
     
     <div class="profile-body">
-      <div id="datosUsuario">
-        <div class="loading">
-          <div class="loading-spinner"></div>
-          Cargando datos del usuario...
-        </div>
+      <div id="loadingState" class="loading-state">
+        <div class="loading-spinner"></div>
+        <p>Cargando tus datos...</p>
       </div>
       
-      <div class="profile-section">
-        <h3>Información de contacto</h3>
-        <div class="info-grid" id="contactInfo">
-          <!-- Datos se cargarán dinámicamente -->
-        </div>
-      </div>
-      
-      <div class="profile-section">
-        <h3>Detalles adicionales</h3>
-        <div class="info-grid" id="additionalInfo">
-          <!-- Datos se cargarán dinámicamente -->
-        </div>
+      <div id="userContent" class="hidden">
+        <div class="profile-section" id="contactInfo"></div>
+        <div class="profile-section" id="additionalInfo"></div>
       </div>
     </div>
+  </div>
+
+  <script type="module" src="perfil.js"></script>
+</body>
+</html>
   </div>
 
   <script type="module" src="perfil.js"></script>
