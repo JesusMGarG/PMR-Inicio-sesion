@@ -50,22 +50,39 @@ window.logout = async () => {
 // 🔄 Mostrar usuarios en tabla
 async function cargarUsuarios() {
   const tbody = document.querySelector("#tablaUsuarios tbody");
-  tbody.innerHTML = "";
+  tbody.innerHTML = "<tr><td colspan='5'>Cargando usuarios...</td></tr>";
 
-  const querySnapshot = await getDocs(collection(db, "usuarios"));
-  querySnapshot.forEach(docSnap => {
-    const data = docSnap.data();
-    const tr = document.createElement("tr");
+  try {
+    const querySnapshot = await getDocs(collection(db, "usuarios"));
+    
+    if (querySnapshot.empty) {
+      tbody.innerHTML = "<tr><td colspan='5'>No hay usuarios registrados</td></tr>";
+      return;
+    }
 
-    tr.innerHTML = `
-      <td>${docSnap.id}</td>
-      <td>${data.nombre || ""}</td>
-      <td>${data.correo || ""}</td>
-      <td>${data.mensaje || ""}</td>
-      <td><button onclick="editarUsuario('${docSnap.id}', '${data.nombre || ""}', '${data.correo || ""}', '${data.mensaje || ""}')">✏️</button></td>
-    `;
-    tbody.appendChild(tr);
-  });
+    tbody.innerHTML = "";
+    querySnapshot.forEach(docSnap => {
+      const data = docSnap.data();
+      const tr = document.createElement("tr");
+
+      // Escapar comillas simples para el onclick
+      const nombreEscapado = (data.nombre || "").replace(/'/g, "\\'");
+      const correoEscapado = (data.correo || "").replace(/'/g, "\\'");
+      const mensajeEscapado = (data.mensaje || "").replace(/'/g, "\\'");
+
+      tr.innerHTML = `
+        <td>${docSnap.id}</td>
+        <td>${data.nombre || "N/A"}</td>
+        <td>${data.correo || "N/A"}</td>
+        <td>${data.mensaje || "N/A"}</td>
+        <td><button onclick="editarUsuario('${docSnap.id}', '${nombreEscapado}', '${correoEscapado}', '${mensajeEscapado}')">✏️</button></td>
+      `;
+      tbody.appendChild(tr);
+    });
+  } catch (error) {
+    console.error("Error al cargar usuarios:", error);
+    tbody.innerHTML = `<tr><td colspan='5'>Error al cargar: ${error.message}</td></tr>`;
+  }
 }
 
 // ✏️ Cargar datos al formulario
