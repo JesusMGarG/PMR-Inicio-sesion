@@ -18,12 +18,14 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 
 onAuthStateChanged(auth, async (user) => {
-  const loadingDiv = document.getElementById("datosUsuario");
-  const contactInfoDiv = document.getElementById("contactInfo");
-  const additionalInfoDiv = document.getElementById("additionalInfo");
+  const loadingState = document.getElementById("loadingState");
+  const userContent = document.getElementById("userContent");
   const userAvatar = document.getElementById("userAvatar");
+  const avatarInitials = document.getElementById("avatarInitials");
   const userName = document.getElementById("userName");
   const userEmail = document.getElementById("userEmail");
+  const contactInfo = document.getElementById("contactInfo");
+  const additionalInfo = document.getElementById("additionalInfo");
 
   if (user) {
     try {
@@ -33,15 +35,15 @@ onAuthStateChanged(auth, async (user) => {
       if (userSnap.exists()) {
         const userData = userSnap.data();
         
-        // Ocultar loader y mostrar datos
-        loadingDiv.style.display = "none";
-        
         // Actualizar cabecera del perfil
         if (userData.nombre) {
           userName.textContent = userData.nombre;
-          // Mostrar iniciales si no hay avatar
-          document.getElementById("avatarInitials").textContent = 
-            userData.nombre.split(' ').map(n => n[0]).join('').toUpperCase();
+          // Crear iniciales si no hay imagen
+          const names = userData.nombre.split(' ');
+          const initials = names.length > 1 
+            ? `${names[0][0]}${names[names.length-1][0]}`.toUpperCase()
+            : names[0][0].toUpperCase();
+          avatarInitials.textContent = initials;
         }
         
         if (userData.correo) {
@@ -49,45 +51,56 @@ onAuthStateChanged(auth, async (user) => {
         }
 
         // Información de contacto
-        contactInfoDiv.innerHTML = `
-          <div class="info-item">
-            <span class="info-label">Nombre completo</span>
-            <div class="info-value">${userData.nombre || "No especificado"}</div>
-          </div>
-          <div class="info-item">
-            <span class="info-label">Correo electrónico</span>
-            <div class="info-value">${userData.correo || "No especificado"}</div>
-          </div>
-          <div class="info-item">
-            <span class="info-label">Teléfono</span>
-            <div class="info-value">${userData.telefono || "No especificado"}</div>
+        contactInfo.innerHTML = `
+          <h3>Información de contacto</h3>
+          <div class="info-grid">
+            <div class="info-item">
+              <span class="info-label">Nombre completo</span>
+              <div class="info-value">${userData.nombre || "No especificado"}</div>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Correo electrónico</span>
+              <div class="info-value">${userData.correo || "No especificado"}</div>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Teléfono</span>
+              <div class="info-value">${userData.telefono || "No especificado"}</div>
+            </div>
           </div>
         `;
 
         // Información adicional
-        additionalInfoDiv.innerHTML = `
-          <div class="info-item">
-            <span class="info-label">Mensaje</span>
-            <div class="info-value">${userData.mensaje || "No hay mensaje"}</div>
-          </div>
-          <div class="info-item">
-            <span class="info-label">Fecha de registro</span>
-            <div class="info-value">${new Date(user.metadata.creationTime).toLocaleDateString()}</div>
-          </div>
-          <div class="info-item">
-            <span class="info-label">Último acceso</span>
-            <div class="info-value">${new Date(user.metadata.lastSignInTime).toLocaleString()}</div>
+        additionalInfo.innerHTML = `
+          <h3>Detalles adicionales</h3>
+          <div class="info-grid">
+            <div class="info-item">
+              <span class="info-label">Mensaje</span>
+              <div class="info-value">${userData.mensaje || "No hay mensaje"}</div>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Fecha de registro</span>
+              <div class="info-value">${new Date(user.metadata.creationTime).toLocaleDateString()}</div>
+            </div>
+            <div class="info-item">
+              <span class="info-label">Último acceso</span>
+              <div class="info-value">${new Date(user.metadata.lastSignInTime).toLocaleString()}</div>
+            </div>
           </div>
         `;
+
+        // Ocultar loader y mostrar contenido
+        loadingState.classList.add("hidden");
+        userContent.classList.remove("hidden");
+        
       } else {
-        loadingDiv.innerHTML = '<div class="error-message">No hay datos disponibles para este usuario.</div>';
+        loadingState.innerHTML = '<div class="error-message">No hay datos disponibles para este usuario.</div>';
       }
     } catch (error) {
       console.error("Error al cargar datos:", error);
-      loadingDiv.innerHTML = `<div class="error-message">Error al cargar los datos: ${error.message}</div>`;
+      loadingState.innerHTML = `<div class="error-message">Error al cargar los datos: ${error.message}</div>`;
     }
   } else {
-    loadingDiv.innerHTML = '<div class="error-message">No has iniciado sesión. Redirigiendo...</div>';
+    loadingState.innerHTML = '<div class="error-message">No has iniciado sesión. Redirigiendo...</div>';
     setTimeout(() => {
       window.location.href = "index.html";
     }, 1500);
