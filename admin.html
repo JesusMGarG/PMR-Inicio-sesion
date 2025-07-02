@@ -2,111 +2,96 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <title>Admin Panel</title>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <title>Panel de Administración</title>
+  <script type="module" src="admin.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 30px;
+      background-color: #f4f4f4;
+      color: #333;
+    }
+    h2 {
+      color: #005f73;
+    }
+    input, button {
+      padding: 8px;
+      margin: 5px 0;
+      width: 100%;
+      max-width: 400px;
+      display: block;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    button {
+      background-color: #0077b6;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #023e8a;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin-top: 20px;
+      background: white;
+    }
+    table th, table td {
+      border: 1px solid #ccc;
+      padding: 10px;
+      text-align: left;
+    }
+    table th {
+      background-color: #0077b6;
+      color: white;
+    }
+    .hidden {
+      display: none;
+    }
+  </style>
 </head>
 <body>
   <h2>Panel de Administración</h2>
 
-  <!-- Login -->
+  <!-- Sección de login -->
   <div id="loginDiv">
     <button onclick="login()">🔐 Iniciar sesión con Google</button>
   </div>
 
-  <!-- Panel -->
-  <div id="adminPanel" style="display:none;">
+  <!-- Panel del administrador -->
+  <div id="adminPanel" class="hidden">
     <p>✅ Bienvenido, administrador</p>
 
-    <label>UID del usuario:</label><br>
-    <input type="text" id="uidInput" placeholder="Ej: Wk2hHX..." /><br><br>
+    <label>UID del usuario:</label>
+    <input type="text" id="uidInput" readonly />
 
-    <label>Nuevo nombre:</label><br>
-    <input type="text" id="nombreInput" placeholder="Ej: Juan Pérez" /><br><br>
+    <label>Nombre:</label>
+    <input type="text" id="nombreInput" />
 
-    <label>Nuevo correo:</label><br>
-    <input type="email" id="correoInput" placeholder="Ej: correo@ejemplo.com" /><br><br>
+    <label>Correo:</label>
+    <input type="email" id="correoInput" />
+
+    <label>Mensaje:</label>
+    <input type="text" id="mensajeInput" />
 
     <button onclick="actualizarUsuario()">💾 Guardar cambios</button>
     <button onclick="logout()">🚪 Cerrar sesión</button>
+
+    <h3>📋 Usuarios registrados:</h3>
+    <table id="tablaUsuarios">
+      <thead>
+        <tr>
+          <th>UID</th>
+          <th>Nombre</th>
+          <th>Correo</th>
+          <th>Mensaje</th>
+          <th>Editar</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
   </div>
-
-  <script>
-    const firebaseConfig = {
-  apiKey: "AIzaSyBGMK2jEi-xYgUA0nssmGtuPb9YssYe3vY",
-  authDomain: "prm-contactos.firebaseapp.com",
-  databaseURL: "https://prm-contactos-default-rtdb.firebaseio.com",
-  projectId: "prm-contactos",
-  storageBucket: "prm-contactos.firebasestorage.app",
-  messagingSenderId: "644617404812",
-  appId: "1:644617404812:web:2580a6c1c5acac4e20d6a9",
-  measurementId: "G-TF34X8C3QR"
-};
-
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.firestore();
-
-    auth.onAuthStateChanged(user => {
-      if (user) {
-        user.getIdTokenResult().then(idTokenResult => {
-          if (idTokenResult.claims.admin || user.email === "lcortez@pmrcorp.com.mx") {
-            document.getElementById("adminPanel").style.display = "block";
-            document.getElementById("loginDiv").style.display = "none";
-          } else {
-            alert("⛔ No tienes permisos de administrador.");
-            auth.signOut();
-          }
-        });
-      } else {
-        document.getElementById("adminPanel").style.display = "none";
-        document.getElementById("loginDiv").style.display = "block";
-      }
-    });
-
-    function login() {
-  const provider = new firebase.auth.GoogleAuthProvider();
-  firebase.auth().signInWithPopup(provider)
-    .then(result => {
-      console.log("✅ Sesión iniciada:", result.user.email);
-    })
-    .catch(error => {
-      console.error("❌ Error al iniciar sesión:", error);
-      alert("Error de autenticación: " + error.message);
-    });
-}
-
-
-    function logout() {
-      auth.signOut();
-    }
-
-    function actualizarUsuario() {
-      const uid = document.getElementById("uidInput").value.trim();
-      const nuevoNombre = document.getElementById("nombreInput").value.trim();
-      const nuevoCorreo = document.getElementById("correoInput").value.trim();
-
-      if (!uid) return alert("⚠️ El UID es obligatorio.");
-
-      const nuevosDatos = {};
-      if (nuevoNombre) nuevosDatos.nombre = nuevoNombre;
-      if (nuevoCorreo) nuevosDatos.correo = nuevoCorreo;
-
-      if (Object.keys(nuevosDatos).length === 0) {
-        return alert("⚠️ Ingresa al menos un dato para actualizar.");
-      }
-
-      db.collection("usuarios").doc(uid).set(nuevosDatos, { merge: true })
-        .then(() => {
-          alert("✅ Usuario actualizado correctamente.");
-          document.getElementById("nombreInput").value = "";
-          document.getElementById("correoInput").value = "";
-        })
-        .catch(error => {
-          alert("❌ Error al actualizar: " + error.message);
-        });
-    }
-  </script>
 </body>
 </html>
