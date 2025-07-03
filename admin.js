@@ -119,10 +119,12 @@ window.actualizarUsuario = async () => {
   const mensaje = document.getElementById("mensajeInput").value.trim();
 
   if (!uid || !nombre) {
-    showError("⚠️ UID y nombre son obligatorios.");
+    showError("⚠️ UID y nombre son campos obligatorios.");
     return;
-  } else if (!correo && !telefono) {
-    showError("⚠️ Se tiene que ingresar correo o teléfono");
+  }
+  
+  if (!correo && !telefono) {
+    showError("⚠️ Debes ingresar al menos un correo o un teléfono.");
     return;
   }
 
