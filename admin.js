@@ -68,14 +68,14 @@ async function cargarUsuarios() {
       // Escapar comillas simples para el onclick
       const nombreEscapado = (data.nombre || "").replace(/'/g, "\\'");
       const correoEscapado = (data.correo || "").replace(/'/g, "\\'");
-      const mensajeEscapado = (data.mensaje || "").replace(/'/g, "\\'");
+      const telefonoEscapado = (data.telefono || "").replace(/'/g, "\\'");
 
       tr.innerHTML = `
         <td>${docSnap.id}</td>
         <td>${data.nombre || "N/A"}</td>
         <td>${data.correo || "N/A"}</td>
-        <td>${data.mensaje || "N/A"}</td>
-        <td><button onclick="editarUsuario('${docSnap.id}', '${nombreEscapado}', '${correoEscapado}', '${mensajeEscapado}')">✏️</button></td>
+        <td>${data.telefono || "N/A"}</td>
+        <td><button onclick="editarUsuario('${docSnap.id}', '${nombreEscapado}', '${correoEscapado}', '${telefonoEscapado}')">✏️</button></td>
       `;
       tbody.appendChild(tr);
     });
@@ -86,11 +86,11 @@ async function cargarUsuarios() {
 }
 
 // ✏️ Cargar datos al formulario
-window.editarUsuario = (uid, nombre, correo, mensaje) => {
+window.editarUsuario = (uid, nombre, correo, telefono) => {
   document.getElementById("uidInput").value = uid;
   document.getElementById("nombreInput").value = nombre;
   document.getElementById("correoInput").value = correo;
-  document.getElementById("mensajeInput").value = mensaje;
+  document.getElementById("telefonoInput").value = telefono;
 };
 
 // 💾 Guardar cambios
@@ -98,15 +98,18 @@ window.actualizarUsuario = async () => {
   const uid = document.getElementById("uidInput").value.trim();
   const nombre = document.getElementById("nombreInput").value.trim();
   const correo = document.getElementById("correoInput").value.trim();
-  const mensaje = document.getElementById("mensajeInput").value.trim();
+  const mensaje = document.getElementById("telefonoInput").value.trim();
 
-  if (!uid || !nombre || !correo) {
-    alert("⚠️ UID, nombre y correo son obligatorios.");
+  if (!uid || !nombre) {
+    alert("⚠️ UID y nombre son obligatorios.");
+    return;
+  }else if(!correo && !telefono){
+    alert("⚠️ Se tiene que ingresar correo o telefono");
     return;
   }
 
   try {
-    await setDoc(doc(db, "usuarios", uid), { nombre, correo, mensaje }, { merge: true });
+    await setDoc(doc(db, "usuarios", uid), { nombre, correo, telefono }, { merge: true });
     alert("✅ Usuario actualizado correctamente.");
     await cargarUsuarios(); // Refrescar tabla
   } catch (error) {
