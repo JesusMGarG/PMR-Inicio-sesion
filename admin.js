@@ -118,6 +118,7 @@ window.actualizarUsuario = async () => {
   const telefono = document.getElementById("telefonoInput").value.trim();
   const mensaje = document.getElementById("mensajeInput").value.trim();
 
+  // Validaciones
   if (!uid || !nombre) {
     showError("⚠️ UID y nombre son campos obligatorios.");
     return;
@@ -129,9 +130,15 @@ window.actualizarUsuario = async () => {
   }
 
   try {
-    await setDoc(doc(db, "usuarios", uid), { nombre, correo, telefono, mensaje }, { merge: true });
+    await setDoc(doc(db, "usuarios", uid), { 
+      nombre, 
+      correo: correo || null, 
+      telefono: telefono || null, 
+      mensaje: mensaje || null 
+    }, { merge: true });
+    
     showSuccess("✅ Usuario actualizado correctamente.");
-    await cargarUsuarios(); // Refrescar tabla
+    await cargarUsuarios();
     
     // Limpiar formulario
     document.getElementById("uidInput").value = "";
@@ -140,7 +147,7 @@ window.actualizarUsuario = async () => {
     document.getElementById("telefonoInput").value = "";
     document.getElementById("mensajeInput").value = "";
   } catch (error) {
-    showError("❌ Error al guardar: " + error.message);
+    showError(`❌ Error al guardar: ${error.message}`);
   }
 };
 
