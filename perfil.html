@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Mi Perfil</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
     :root {
       --primary-color: #4361ee;
@@ -78,6 +79,7 @@
     .profile-email {
       font-size: 16px;
       opacity: 0.9;
+      margin-bottom: 15px;
     }
 
     .profile-body {
@@ -152,6 +154,27 @@
       text-align: center;
     }
 
+    /* Botón de cerrar sesión */
+    .logout-button {
+      background-color: rgba(255, 255, 255, 0.2);
+      color: white;
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      padding: 8px 16px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 14px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: var(--transition);
+      margin-top: 10px;
+    }
+
+    .logout-button:hover {
+      background-color: rgba(255, 255, 255, 0.3);
+      transform: translateY(-2px);
+    }
+
     @keyframes spin {
       0% { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
@@ -184,6 +207,7 @@
       </div>
       <h2 id="userName">Cargando...</h2>
       <div class="profile-email" id="userEmail">usuario@ejemplo.com</div>
+      <!-- El botón de cerrar sesión se añadirá aquí dinámicamente -->
     </div>
     
     <div class="profile-body">
@@ -197,11 +221,6 @@
         <div class="profile-section" id="additionalInfo"></div>
       </div>
     </div>
-  </div>
-
-  <script type="module" src="perfil.js"></script>
-</body>
-</html>
   </div>
 
   <script type="module" src="perfil.js"></script>
