@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import { getFirestore, collection, getDocs, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, collection, getDocs, doc, setDoc, deleteDoc, addDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 // Configuración Firebase
 const firebaseConfig = {
@@ -50,13 +50,13 @@ window.logout = async () => {
 // 🔄 Mostrar usuarios en tabla
 async function cargarUsuarios() {
   const tbody = document.querySelector("#tablaUsuarios tbody");
-  tbody.innerHTML = "<tr><td colspan='6' class='text-center'>Cargando usuarios...</td></tr>";
+  tbody.innerHTML = "<tr><td colspan='7' class='text-center'>Cargando usuarios...</td></tr>";
 
   try {
     const querySnapshot = await getDocs(collection(db, "usuarios"));
     
     if (querySnapshot.empty) {
-      tbody.innerHTML = "<tr><td colspan='6' class='text-center'>No hay usuarios registrados</td></tr>";
+      tbody.innerHTML = "<tr><td colspan='7' class='text-center'>No hay usuarios registrados</td></tr>";
       return;
     }
 
@@ -86,12 +86,21 @@ async function cargarUsuarios() {
             Editar
           </button>
         </td>
+        <td>
+          <button onclick="eliminarUsuario('${docSnap.id}')" class="danger">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
+              <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4L4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
+            </svg>
+            Eliminar
+          </button>
+        </td>
       `;
       tbody.appendChild(tr);
     });
   } catch (error) {
     console.error("Error al cargar usuarios:", error);
-    tbody.innerHTML = `<tr><td colspan='6' class='text-center'>Error al cargar: ${error.message}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan='7' class='text-center'>Error al cargar: ${error.message}</td></tr>`;
   }
 }
 
@@ -103,11 +112,30 @@ window.editarUsuario = (uid, nombre, correo, telefono, mensaje) => {
   document.getElementById("telefonoInput").value = telefono;
   document.getElementById("mensajeInput").value = mensaje;
   
+  // Cambiar texto del botón a "Actualizar"
+  document.getElementById("btnGuardar").textContent = "Actualizar";
+  
   // Scroll suave al formulario
   document.getElementById("uidInput").scrollIntoView({ 
     behavior: 'smooth', 
     block: 'center' 
   });
+};
+
+// 🆕 Agregar nuevo usuario
+window.nuevoUsuario = () => {
+  // Limpiar formulario
+  document.getElementById("uidInput").value = "";
+  document.getElementById("nombreInput").value = "";
+  document.getElementById("correoInput").value = "";
+  document.getElementById("telefonoInput").value = "";
+  document.getElementById("mensajeInput").value = "";
+  
+  // Cambiar texto del botón a "Guardar"
+  document.getElementById("btnGuardar").textContent = "Guardar";
+  
+  // Enfocar el primer campo
+  document.getElementById("nombreInput").focus();
 };
 
 // 💾 Guardar cambios
@@ -119,8 +147,8 @@ window.actualizarUsuario = async () => {
   const mensaje = document.getElementById("mensajeInput").value.trim();
 
   // Validaciones
-  if (!uid || !nombre) {
-    showError("⚠️ UID y nombre son campos obligatorios.");
+  if (!nombre) {
+    showError("⚠️ El nombre es obligatorio.");
     return;
   }
   
@@ -130,14 +158,23 @@ window.actualizarUsuario = async () => {
   }
 
   try {
-    await setDoc(doc(db, "usuarios", uid), { 
+    const userData = { 
       nombre, 
       correo: correo || null, 
       telefono: telefono || null, 
       mensaje: mensaje || null 
-    }, { merge: true });
+    };
     
-    showSuccess("✅ Usuario actualizado correctamente.");
+    if (uid) {
+      // Actualizar usuario existente
+      await setDoc(doc(db, "usuarios", uid), userData, { merge: true });
+      showSuccess("✅ Usuario actualizado correctamente.");
+    } else {
+      // Crear nuevo usuario
+      await addDoc(collection(db, "usuarios"), userData);
+      showSuccess("✅ Usuario creado correctamente.");
+    }
+    
     await cargarUsuarios();
     
     // Limpiar formulario
@@ -146,8 +183,26 @@ window.actualizarUsuario = async () => {
     document.getElementById("correoInput").value = "";
     document.getElementById("telefonoInput").value = "";
     document.getElementById("mensajeInput").value = "";
+    
+    // Restaurar texto del botón
+    document.getElementById("btnGuardar").textContent = "Guardar";
   } catch (error) {
     showError(`❌ Error al guardar: ${error.message}`);
+  }
+};
+
+// 🗑️ Eliminar usuario
+window.eliminarUsuario = async (uid) => {
+  if (!confirm("¿Estás seguro de que deseas eliminar este usuario? Esta acción no se puede deshacer.")) {
+    return;
+  }
+
+  try {
+    await deleteDoc(doc(db, "usuarios", uid));
+    showSuccess("✅ Usuario eliminado correctamente.");
+    await cargarUsuarios();
+  } catch (error) {
+    showError(`❌ Error al eliminar: ${error.message}`);
   }
 };
 
