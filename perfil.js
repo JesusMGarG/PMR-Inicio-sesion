@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -16,6 +16,30 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
+
+// Función para cerrar sesión
+const logout = async () => {
+  try {
+    await signOut(auth);
+    window.location.href = "index.html";
+  } catch (error) {
+    console.error("Error al cerrar sesión:", error);
+  }
+};
+
+// Configurar el botón de cerrar sesión
+const setupLogoutButton = () => {
+  const logoutBtn = document.createElement("button");
+  logoutBtn.id = "logoutBtn";
+  logoutBtn.className = "logout-button";
+  logoutBtn.innerHTML = '<i class="fas fa-sign-out-alt"></i> Cerrar sesión';
+  logoutBtn.addEventListener("click", logout);
+  
+  const profileHeader = document.querySelector(".profile-header");
+  if (profileHeader) {
+    profileHeader.appendChild(logoutBtn);
+  }
+};
 
 onAuthStateChanged(auth, async (user) => {
   const loadingState = document.getElementById("loadingState");
@@ -91,6 +115,9 @@ onAuthStateChanged(auth, async (user) => {
         // Ocultar loader y mostrar contenido
         loadingState.classList.add("hidden");
         userContent.classList.remove("hidden");
+        
+        // Añadir botón de cerrar sesión
+        setupLogoutButton();
         
       } else {
         loadingState.innerHTML = '<div class="error-message">No hay datos disponibles para este usuario.</div>';
