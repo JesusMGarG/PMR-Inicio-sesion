@@ -1,6 +1,21 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import { getFirestore, collection, getDocs, doc, setDoc, deleteDoc, addDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { 
+  getAuth, 
+  GoogleAuthProvider, 
+  signInWithPopup, 
+  onAuthStateChanged, 
+  signOut,
+  createUserWithEmailAndPassword 
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { 
+  getFirestore, 
+  collection, 
+  getDocs, 
+  doc, 
+  setDoc, 
+  deleteDoc, 
+  addDoc 
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 // Configuración Firebase
 const firebaseConfig = {
@@ -90,7 +105,7 @@ async function cargarUsuarios() {
           <button onclick="eliminarUsuario('${docSnap.id}')" class="danger">
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
               <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
-              <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4L4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
+              <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1z"/>
             </svg>
             Eliminar
           </button>
@@ -138,7 +153,7 @@ window.nuevoUsuario = () => {
   document.getElementById("nombreInput").focus();
 };
 
-// 💾 Guardar cambios
+// 💾 Guardar cambios (con creación de usuario en Auth)
 window.actualizarUsuario = async () => {
   const uid = document.getElementById("uidInput").value.trim();
   const nombre = document.getElementById("nombreInput").value.trim();
@@ -152,15 +167,15 @@ window.actualizarUsuario = async () => {
     return;
   }
   
-  if (!correo && !telefono) {
-    showError("⚠️ Debes ingresar al menos un correo o un teléfono.");
+  if (!correo) {
+    showError("⚠️ El correo es obligatorio para crear el usuario.");
     return;
   }
 
   try {
     const userData = { 
       nombre, 
-      correo: correo || null, 
+      correo, 
       telefono: telefono || null, 
       mensaje: mensaje || null 
     };
@@ -170,9 +185,19 @@ window.actualizarUsuario = async () => {
       await setDoc(doc(db, "usuarios", uid), userData, { merge: true });
       showSuccess("✅ Usuario actualizado correctamente.");
     } else {
-      // Crear nuevo usuario
-      await addDoc(collection(db, "usuarios"), userData);
-      showSuccess("✅ Usuario creado correctamente.");
+      // Crear nuevo usuario en Authentication
+      const tempPassword = generateTempPassword();
+      
+      // Crear usuario en Authentication
+      const userCredential = await createUserWithEmailAndPassword(auth, correo, tempPassword);
+      const newUID = userCredential.user.uid;
+      
+      // Crear documento en Firestore
+      await setDoc(doc(db, "usuarios", newUID), userData);
+      showSuccess("✅ Usuario creado y registrado correctamente.");
+      
+      // Mostrar credenciales (solo para desarrollo)
+      alert(`✅ Usuario creado\n\nCorreo: ${correo}\nContraseña temporal: ${tempPassword}\n\nPor seguridad, cambie esta contraseña en el primer inicio.`);
     }
     
     await cargarUsuarios();
@@ -190,6 +215,16 @@ window.actualizarUsuario = async () => {
     showError(`❌ Error al guardar: ${error.message}`);
   }
 };
+
+// Generar contraseña temporal
+function generateTempPassword() {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*";
+  let password = "";
+  for (let i = 0; i < 12; i++) {
+    password += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return password;
+}
 
 // 🗑️ Eliminar usuario
 window.eliminarUsuario = async (uid) => {
