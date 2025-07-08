@@ -13,8 +13,7 @@ import {
   getDocs, 
   doc, 
   setDoc, 
-  deleteDoc, 
-  addDoc 
+  deleteDoc
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 // Configuración Firebase
@@ -30,6 +29,25 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
+
+// Función para generar contraseña temporal (más segura)
+function generateTempPassword() {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*";
+  let password = "";
+  // Aseguramos que la contraseña tenga al menos un número y un carácter especial
+  password += chars.charAt(Math.floor(Math.random() * 26)); // Letra mayúscula
+  password += chars.charAt(26 + Math.floor(Math.random() * 26)); // Letra minúscula
+  password += chars.charAt(52 + Math.floor(Math.random() * 10)); // Número
+  password += chars.charAt(62 + Math.floor(Math.random() * 8)); // Carácter especial
+  
+  // Completamos hasta 12 caracteres
+  for (let i = 4; i < 12; i++) {
+    password += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  
+  // Mezclamos los caracteres para mayor seguridad
+  return password.split('').sort(() => 0.5 - Math.random()).join('');
+}
 
 // 🧾 Login con Google
 window.login = async () => {
@@ -81,7 +99,6 @@ async function cargarUsuarios() {
       const tr = document.createElement("tr");
       tr.className = "animate-fade";
 
-      // Escapar comillas simples para el onclick
       const nombreEscapado = (data.nombre || "").replace(/'/g, "\\'");
       const correoEscapado = (data.correo || "").replace(/'/g, "\\'");
       const telefonoEscapado = (data.telefono || "").replace(/'/g, "\\'");
@@ -115,6 +132,7 @@ async function cargarUsuarios() {
     });
   } catch (error) {
     console.error("Error al cargar usuarios:", error);
+    showError(`Error al cargar usuarios: ${error.message}`);
     tbody.innerHTML = `<tr><td colspan='7' class='text-center'>Error al cargar: ${error.message}</td></tr>`;
   }
 }
@@ -124,32 +142,23 @@ window.editarUsuario = (uid, nombre, correo, telefono, mensaje) => {
   document.getElementById("uidInput").value = uid;
   document.getElementById("nombreInput").value = nombre;
   document.getElementById("correoInput").value = correo;
+  document.getElementById("confirmarCorreoInput").value = correo;
   document.getElementById("telefonoInput").value = telefono;
   document.getElementById("mensajeInput").value = mensaje;
   
-  // Cambiar texto del botón a "Actualizar"
   document.getElementById("btnGuardar").textContent = "Actualizar";
-  
-  // Scroll suave al formulario
-  document.getElementById("uidInput").scrollIntoView({ 
-    behavior: 'smooth', 
-    block: 'center' 
-  });
+  document.getElementById("uidInput").scrollIntoView({ behavior: 'smooth', block: 'center' });
 };
 
 // 🆕 Agregar nuevo usuario
 window.nuevoUsuario = () => {
-  // Limpiar formulario
   document.getElementById("uidInput").value = "";
   document.getElementById("nombreInput").value = "";
   document.getElementById("correoInput").value = "";
+  document.getElementById("confirmarCorreoInput").value = "";
   document.getElementById("telefonoInput").value = "";
   document.getElementById("mensajeInput").value = "";
-  
-  // Cambiar texto del botón a "Guardar"
   document.getElementById("btnGuardar").textContent = "Guardar";
-  
-  // Enfocar el primer campo
   document.getElementById("nombreInput").focus();
 };
 
@@ -158,6 +167,7 @@ window.actualizarUsuario = async () => {
   const uid = document.getElementById("uidInput").value.trim();
   const nombre = document.getElementById("nombreInput").value.trim();
   const correo = document.getElementById("correoInput").value.trim();
+  const confirmarCorreo = document.getElementById("confirmarCorreoInput").value.trim();
   const telefono = document.getElementById("telefonoInput").value.trim();
   const mensaje = document.getElementById("mensajeInput").value.trim();
 
@@ -168,7 +178,17 @@ window.actualizarUsuario = async () => {
   }
   
   if (!correo) {
-    showError("⚠️ El correo es obligatorio para crear el usuario.");
+    showError("⚠️ El correo es obligatorio.");
+    return;
+  }
+
+  if (correo !== confirmarCorreo) {
+    showError("⚠️ Los correos no coinciden.");
+    return;
+  }
+
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo)) {
+    showError("⚠️ Ingresa un correo electrónico válido.");
     return;
   }
 
@@ -177,7 +197,8 @@ window.actualizarUsuario = async () => {
       nombre, 
       correo, 
       telefono: telefono || null, 
-      mensaje: mensaje || null 
+      mensaje: mensaje || null,
+      fechaActualizacion: new Date().toISOString()
     };
     
     if (uid) {
@@ -192,49 +213,56 @@ window.actualizarUsuario = async () => {
       const userCredential = await createUserWithEmailAndPassword(auth, correo, tempPassword);
       const newUID = userCredential.user.uid;
       
+      // Añadir fecha de creación
+      userData.fechaCreacion = new Date().toISOString();
+      
       // Crear documento en Firestore
       await setDoc(doc(db, "usuarios", newUID), userData);
-      showSuccess("✅ Usuario creado y registrado correctamente.");
       
-      // Mostrar credenciales (solo para desarrollo)
-      alert(`✅ Usuario creado\n\nCorreo: ${correo}\nContraseña temporal: ${tempPassword}\n\nPor seguridad, cambie esta contraseña en el primer inicio.`);
+      // Mostrar credenciales
+      const credenciales = `
+        ✅ Usuario creado exitosamente
+        ----------------------------
+        Correo: ${correo}
+        Contraseña temporal: ${tempPassword}
+        ----------------------------
+        IMPORTANTE: El usuario debe cambiar esta contraseña en su primer inicio de sesión.
+      `;
+      
+      showSuccess("✅ Usuario creado y registrado correctamente.");
+      alert(credenciales);
     }
     
     await cargarUsuarios();
+    window.nuevoUsuario(); // Limpiar formulario
     
-    // Limpiar formulario
-    document.getElementById("uidInput").value = "";
-    document.getElementById("nombreInput").value = "";
-    document.getElementById("correoInput").value = "";
-    document.getElementById("telefonoInput").value = "";
-    document.getElementById("mensajeInput").value = "";
-    
-    // Restaurar texto del botón
-    document.getElementById("btnGuardar").textContent = "Guardar";
   } catch (error) {
-    showError(`❌ Error al guardar: ${error.message}`);
+    console.error("Error completo:", error);
+    
+    let mensajeError = `❌ Error al guardar: ${error.message}`;
+    
+    // Manejo específico de errores comunes
+    if (error.code === 'auth/email-already-in-use') {
+      mensajeError = "❌ Este correo ya está registrado por otro usuario.";
+    } else if (error.code === 'auth/invalid-email') {
+      mensajeError = "❌ El formato del correo electrónico es inválido.";
+    } else if (error.code === 'auth/weak-password') {
+      mensajeError = "❌ Error interno: La contraseña generada no es segura.";
+    }
+    
+    showError(mensajeError);
   }
 };
 
-// Generar contraseña temporal
-function generateTempPassword() {
-  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*";
-  let password = "";
-  for (let i = 0; i < 12; i++) {
-    password += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return password;
-}
-
 // 🗑️ Eliminar usuario
 window.eliminarUsuario = async (uid) => {
-  if (!confirm("¿Estás seguro de que deseas eliminar este usuario? Esta acción no se puede deshacer.")) {
+  if (!confirm("¿Estás seguro de que deseas eliminar este usuario?\n\nEsta acción eliminará los datos del usuario pero NO su cuenta de acceso.\n\nPara eliminar completamente al usuario, debes hacerlo manualmente en la consola de Firebase.")) {
     return;
   }
 
   try {
     await deleteDoc(doc(db, "usuarios", uid));
-    showSuccess("✅ Usuario eliminado correctamente.");
+    showSuccess("✅ Usuario eliminado de la base de datos.\n\nNota: La cuenta de acceso sigue activa en Authentication.");
     await cargarUsuarios();
   } catch (error) {
     showError(`❌ Error al eliminar: ${error.message}`);
