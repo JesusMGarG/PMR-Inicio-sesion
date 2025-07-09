@@ -1,6 +1,18 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { 
+  getAuth, 
+  signInWithPopup, 
+  GoogleAuthProvider, 
+  signOut, 
+  signInWithEmailAndPassword 
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { 
+  getFirestore, 
+  collection, 
+  query, 
+  where, 
+  getDocs 
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 // Configuración Firebase
 const firebaseConfig = {
@@ -14,35 +26,33 @@ const firebaseConfig = {
   measurementId: "G-TF34X8C3QR"
 };
 
+// Inicializar Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// Función para verificar si un usuario existe en Firestore
-async function usuarioAutorizado(uid, email) {
+// ==================== FUNCIÓN DE VERIFICACIÓN ====================
+async function usuarioAutorizado(uid) {
   try {
     const usuariosRef = collection(db, "usuarios");
-    // Buscamos tanto por uid como por correo para mayor seguridad
     const q = query(usuariosRef, where("uid", "==", uid));
     const querySnapshot = await getDocs(q);
-    
     return !querySnapshot.empty;
   } catch (error) {
-    console.error("Error verificando usuario:", error);
+    console.error("Error al verificar usuario:", error);
     return false;
   }
 }
 
+// ==================== LOGIN CON GOOGLE ====================
 window.loginConGoogle = async () => {
   const provider = new GoogleAuthProvider();
 
   try {
     const result = await signInWithPopup(auth, provider);
     const user = result.user;
-    
-    // Verificamos si el usuario está registrado en Firestore
-    const autorizado = await usuarioAutorizado(user.uid, user.email);
-    
+    const autorizado = await usuarioAutorizado(user.uid);
+
     if (autorizado) {
       window.location.href = "perfil.html";
     } else {
@@ -50,14 +60,12 @@ window.loginConGoogle = async () => {
       alert("⛔ No tienes permiso para acceder. Contacta al administrador.");
     }
   } catch (error) {
-    console.error("❌ Error al iniciar sesión con Google:", error);
-    const errorMessage = error.code === 'auth/popup-closed-by-user' 
-      ? "El popup de inicio de sesión fue cerrado" 
-      : error.message;
-    alert("❌ Error: " + errorMessage);
+    console.error("Error en login con Google:", error);
+    alert(`❌ Error: ${error.message}`);
   }
 };
 
+// ==================== LOGIN CON EMAIL/CONTRASEÑA ====================
 window.login = async () => {
   const email = document.getElementById("email").value.trim();
   const pass = document.getElementById("password").value.trim();
@@ -70,10 +78,8 @@ window.login = async () => {
   try {
     const userCredential = await signInWithEmailAndPassword(auth, email, pass);
     const user = userCredential.user;
-    
-    // Verificamos si el usuario está registrado en Firestore
-    const autorizado = await usuarioAutorizado(user.uid, user.email);
-    
+    const autorizado = await usuarioAutorizado(user.uid);
+
     if (autorizado) {
       window.location.href = "perfil.html";
     } else {
@@ -81,24 +87,21 @@ window.login = async () => {
       alert("⛔ No tienes permiso para acceder. Contacta al administrador.");
     }
   } catch (error) {
-    console.error("❌ Error al iniciar sesión:", error);
-    let errorMessage = "Error al iniciar sesión";
+    console.error("Error en login:", error);
+    let mensaje = "Error al iniciar sesión";
     
     switch(error.code) {
       case 'auth/invalid-email':
-        errorMessage = "El correo electrónico no es válido";
-        break;
-      case 'auth/user-disabled':
-        errorMessage = "Esta cuenta ha sido deshabilitada";
+        mensaje = "Correo electrónico inválido";
         break;
       case 'auth/user-not-found':
       case 'auth/wrong-password':
-        errorMessage = "Correo electrónico o contraseña incorrectos";
+        mensaje = "Correo o contraseña incorrectos";
         break;
       default:
-        errorMessage = error.message;
+        mensaje = error.message;
     }
     
-    alert("❌ " + errorMessage);
+    alert(`❌ ${mensaje}`);
   }
 };
