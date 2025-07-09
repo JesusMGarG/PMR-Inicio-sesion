@@ -25,11 +25,11 @@ window.loginConGoogle = async () => {
   try {
     const result = await signInWithPopup(auth, provider);
     const user = result.user;
-    const vid = user.vid;
+    const uid = user.uid;
 
     // Verificamos si el correo está registrado en Firestore
     const usuariosRef = collection(db, "usuarios");
-    const q = query(usuariosRef, where("vid", "==", vid));
+    const q = query(usuariosRef, where("uid", "==", uid));
     const querySnapshot = await getDocs(q);
 
     if (!querySnapshot.empty) {
