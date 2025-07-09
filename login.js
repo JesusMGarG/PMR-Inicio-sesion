@@ -1,18 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { 
-  getAuth, 
-  signInWithPopup, 
-  GoogleAuthProvider, 
-  signOut, 
-  signInWithEmailAndPassword 
-} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import { 
-  getFirestore, 
-  collection, 
-  query, 
-  where, 
-  getDocs 
-} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 // Configuración Firebase
 const firebaseConfig = {
@@ -26,46 +14,37 @@ const firebaseConfig = {
   measurementId: "G-TF34X8C3QR"
 };
 
-// Inicializar Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// ==================== FUNCIÓN DE VERIFICACIÓN ====================
-async function usuarioAutorizado(uid) {
-  try {
-    const usuariosRef = collection(db, "usuarios");
-    const q = query(usuariosRef, where("uid", "==", uid));
-    const querySnapshot = await getDocs(q);
-    return !querySnapshot.empty;
-  } catch (error) {
-    console.error("Error al verificar usuario:", error);
-    return false;
-  }
-}
-
-// ==================== LOGIN CON GOOGLE ====================
 window.loginConGoogle = async () => {
   const provider = new GoogleAuthProvider();
 
   try {
     const result = await signInWithPopup(auth, provider);
     const user = result.user;
-    const autorizado = await usuarioAutorizado(user.uid);
+    const email = user.email; // Usamos uid en lugar de vid
 
-    if (autorizado) {
+    // Verificamos si el usuario está registrado en Firestore
+    const usuariosRef = collection(db, "usuarios");
+    const q = query(usuariosRef, where("correo", "==", email)); // Buscamos por uid
+    const querySnapshot = await getDocs(q);
+
+    if (!querySnapshot.empty) {
+      // Usuario autorizado
       window.location.href = "perfil.html";
     } else {
+      // No está autorizado → cerrar sesión
       await signOut(auth);
-      alert("⛔ No tienes permiso para acceder. Contacta al administrador.");
+      alert("⛔ Esta cuenta no está registrada en la base de datos.");
     }
   } catch (error) {
-    console.error("Error en login con Google:", error);
-    alert(`❌ Error: ${error.message}`);
+    console.error("❌ Error al iniciar sesión:", error);
+    alert("❌ Error: " + error.message);
   }
 };
-
-// ==================== LOGIN CON EMAIL/CONTRASEÑA ====================
+// 🔑 Inicio de sesión con correo y contraseña
 window.login = async () => {
   const email = document.getElementById("email").value.trim();
   const pass = document.getElementById("password").value.trim();
@@ -76,32 +55,10 @@ window.login = async () => {
   }
 
   try {
-    const userCredential = await signInWithEmailAndPassword(auth, email, pass);
-    const user = userCredential.user;
-    const autorizado = await usuarioAutorizado(user.uid);
-
-    if (autorizado) {
+    await signInWithEmailAndPassword(auth, email, pass);
+      // Usuario normal
       window.location.href = "perfil.html";
-    } else {
-      await signOut(auth);
-      alert("⛔ No tienes permiso para acceder. Contacta al administrador.");
-    }
-  } catch (error) {
-    console.error("Error en login:", error);
-    let mensaje = "Error al iniciar sesión";
-    
-    switch(error.code) {
-      case 'auth/invalid-email':
-        mensaje = "Correo electrónico inválido";
-        break;
-      case 'auth/user-not-found':
-      case 'auth/wrong-password':
-        mensaje = "Correo o contraseña incorrectos";
-        break;
-      default:
-        mensaje = error.message;
-    }
-    
-    alert(`❌ ${mensaje}`);
+  } catch (e) {
+    alert("❌ Error: " + e.message);
   }
-};
+}; 
