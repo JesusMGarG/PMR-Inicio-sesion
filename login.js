@@ -23,23 +23,30 @@ window.loginConGoogle = async () => {
   const provider = new GoogleAuthProvider();
 
   try {
+    // 1. Iniciar sesión con Google
     const result = await signInWithPopup(auth, provider);
     const user = result.user;
-    const uid = user.uid; // Usamos el UID de Firebase Auth
 
-    // Verificamos si el UID existe en la colección "usuarios" de Firestore
+    // 2. Verificar que el user y su UID existan
+    if (!user || !user.uid) {
+      throw new Error("No se pudo obtener el UID del usuario.");
+    }
+
+    // 3. Obtener referencia a Firestore
     const usuariosRef = collection(db, "usuarios");
-    const q = query(usuariosRef, where("uid", "==", uid)); // Buscamos por "uid"
+    
+    // 4. Buscar en Firestore (Ajusta "uid" por el campo correcto que usas en tu DB)
+    const q = query(usuariosRef, where("uid", "==", user.uid));  // 👈 Cambia "uid" por "vid" si es necesario
     const querySnapshot = await getDocs(q);
 
+    // 5. Redirigir o denegar acceso
     if (!querySnapshot.empty) {
-      // Usuario autorizado
-      window.location.href = "perfil.html";
+      window.location.href = "perfil.html"; // ✅ Usuario autorizado
     } else {
-      // No está autorizado → cerrar sesión
-      await signOut(auth);
+      await signOut(auth); // ⛔ Cerrar sesión si no está registrado
       alert("⛔ Esta cuenta no está registrada en la base de datos.");
     }
+
   } catch (error) {
     console.error("❌ Error al iniciar sesión:", error);
     alert("❌ Error: " + error.message);
