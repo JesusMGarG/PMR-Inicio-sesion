@@ -150,7 +150,8 @@ window.actualizarUsuario = async () => {
       nombre, 
       correo: correo || null, 
       telefono: telefono || null, 
-      mensaje: mensaje || null 
+      mensaje: mensaje || null,
+      archivo: archivo || null 
     }, { merge: true });
     
     showSuccess("✅ Usuario actualizado correctamente.");
