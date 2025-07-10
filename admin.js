@@ -196,14 +196,6 @@ window.subirPDF = async () => {
   }
 };
 
-    showSuccess("✅ Archivo PDF subido y vinculado al usuario.");
-    document.getElementById("archivoInput").value = ""; // Limpia input
-  } catch (error) {
-    console.error("Error al subir el PDF:", error);
-    showError("❌ Error al subir el PDF.");
-  }
-};
-
 // Mostrar mensaje de éxito
 function showSuccess(message) {
   const statusDiv = document.querySelector(".success-message");
