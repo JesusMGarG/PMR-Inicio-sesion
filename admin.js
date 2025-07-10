@@ -83,6 +83,7 @@ async function cargarUsuarios() {
       const correoEscapado = (data.correo || "").replace(/'/g, "\\'");
       const telefonoEscapado = (data.telefono || "").replace(/'/g, "\\'");
       const mensajeEscapado = (data.mensaje || "").replace(/'/g, "\\'");
+      const mensajeEscapado = (data.archivo || "").replace(/'/g, "\\'");
 
       tr.innerHTML = `
         <td>${docSnap.id}</td>
@@ -90,8 +91,9 @@ async function cargarUsuarios() {
         <td>${data.correo || "N/A"}</td>
         <td>${data.telefono || "N/A"}</td>
         <td>${data.mensaje || "N/A"}</td>
+        <td>${data.archivo || "N/A"}</td>
         <td>
-          <button onclick="editarUsuario('${docSnap.id}', '${nombreEscapado}', '${correoEscapado}', '${telefonoEscapado}', '${mensajeEscapado}')" class="secondary">
+          <button onclick="editarUsuario('${docSnap.id}', '${nombreEscapado}', '${correoEscapado}', '${telefonoEscapado}', '${mensajeEscapado}', '${archivoEscapado}')" class="secondary">
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
               <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l10-10zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207 11.207 2.5zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293l6.5-6.5zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325z"/>
             </svg>
@@ -108,12 +110,13 @@ async function cargarUsuarios() {
 }
 
 // ✏️ Cargar datos al formulario
-window.editarUsuario = (uid, nombre, correo, telefono, mensaje) => {
+window.editarUsuario = (uid, nombre, correo, telefono, mensaje, archivo) => {
   document.getElementById("uidInput").value = uid;
   document.getElementById("nombreInput").value = nombre;
   document.getElementById("correoInput").value = correo;
   document.getElementById("telefonoInput").value = telefono;
   document.getElementById("mensajeInput").value = mensaje;
+  document.getElementById("archivoInput").value = archivo;
   
   // Scroll suave al formulario
   document.getElementById("uidInput").scrollIntoView({ 
@@ -129,6 +132,7 @@ window.actualizarUsuario = async () => {
   const correo = document.getElementById("correoInput").value.trim();
   const telefono = document.getElementById("telefonoInput").value.trim();
   const mensaje = document.getElementById("mensajeInput").value.trim();
+  const archivo = document.getElementById("archivoInput").value.trim();
 
   // Validaciones
   if (!uid || !nombre) {
@@ -158,6 +162,7 @@ window.actualizarUsuario = async () => {
     document.getElementById("correoInput").value = "";
     document.getElementById("telefonoInput").value = "";
     document.getElementById("mensajeInput").value = "";
+    document.getElementById("archivoInput").value = "";
   } catch (error) {
     showError(`❌ Error al guardar: ${error.message}`);
   }
