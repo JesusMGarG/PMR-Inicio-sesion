@@ -23,9 +23,18 @@ const storage = getStorage(app);
 window.login = async () => {
   const provider = new GoogleAuthProvider();
   try {
-    await signInWithPopup(auth, provider);
+    const result = await signInWithPopup(auth, provider);
+    console.log("Usuario autenticado:", result.user);
   } catch (error) {
+    console.error("Error detallado:", error);
     showError("Error al iniciar sesión: " + error.message);
+    
+    // Errores específicos
+    if (error.code === 'auth/popup-blocked') {
+      showError("El navegador bloqueó la ventana emergente. Permite popups para este sitio.");
+    } else if (error.code === 'auth/popup-closed-by-user') {
+      showError("Cerraste la ventana de inicio de sesión demasiado pronto.");
+    }
   }
 };
 
