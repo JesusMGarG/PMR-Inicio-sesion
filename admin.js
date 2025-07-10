@@ -83,7 +83,7 @@ async function cargarUsuarios() {
       const correoEscapado = (data.correo || "").replace(/'/g, "\\'");
       const telefonoEscapado = (data.telefono || "").replace(/'/g, "\\'");
       const mensajeEscapado = (data.mensaje || "").replace(/'/g, "\\'");
-      const mensajeEscapado = (data.archivo || "").replace(/'/g, "\\'");
+      const archivoEscapado = (data.archivo || "").replace(/'/g, "\\'");
 
       tr.innerHTML = `
         <td>${docSnap.id}</td>
