@@ -171,11 +171,13 @@ window.subirPDF = async () => {
     await uploadBytes(storageRef, archivo);
     const url = await getDownloadURL(storageRef);
 
-    await setDoc(doc(db, "usuarios", uid, "archivos", nombreArchivo), {
-      nombre: nombreArchivo,
-      url: url,
-      fecha: new Date()
-    });
+    await setDoc(doc(db, "usuarios", uid), {
+        archivoPDF: {
+          nombre: nombreArchivo,
+          url: url,
+          fecha: new Date()
+        }
+      }, { merge: true });
 
     showSuccess("✅ PDF subido correctamente y vinculado al usuario.");
     document.getElementById("archivoInput").value = ""; // Limpia el input
