@@ -163,19 +163,27 @@ window.subirPDF = async () => {
     return;
   }
 
-  const rutaStorage = `usuarios/${uid}/${archivo.name}`;
-  const storageRef = ref(storage, rutaStorage);
+  const nombreArchivo = archivo.name;
+  const ruta = `usuarios/${uid}/${nombreArchivo}`;
+  const storageRef = ref(storage, ruta);
 
   try {
     await uploadBytes(storageRef, archivo);
     const url = await getDownloadURL(storageRef);
 
-    // Guardar en Firestore
-    await setDoc(doc(db, "usuarios", uid, "archivos", archivo.name), {
-      nombre: archivo.name,
+    await setDoc(doc(db, "usuarios", uid, "archivos", nombreArchivo), {
+      nombre: nombreArchivo,
       url: url,
       fecha: new Date()
     });
+
+    showSuccess("✅ PDF subido correctamente y vinculado al usuario.");
+    document.getElementById("archivoInput").value = ""; // Limpia el input
+  } catch (error) {
+    console.error("Error al subir PDF:", error);
+    showError("❌ Error al subir el PDF: " + error.message);
+  }
+};
 
     showSuccess("✅ Archivo PDF subido y vinculado al usuario.");
     document.getElementById("archivoInput").value = ""; // Limpia input
