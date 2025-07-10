@@ -1,6 +1,8 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { getFirestore, collection, getDocs, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
+
 
 // Configuración Firebase
 const firebaseConfig = {
@@ -15,6 +17,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
+const storage = getStorage(app);
 
 // 🧾 Login con Google
 window.login = async () => {
@@ -148,6 +151,37 @@ window.actualizarUsuario = async () => {
     document.getElementById("mensajeInput").value = "";
   } catch (error) {
     showError(`❌ Error al guardar: ${error.message}`);
+  }
+};
+
+window.subirPDF = async () => {
+  const archivo = document.getElementById("archivoInput").files[0];
+  const uid = document.getElementById("uidInput").value.trim();
+
+  if (!archivo || !uid) {
+    showError("⚠️ Debes seleccionar un archivo PDF y tener un UID cargado.");
+    return;
+  }
+
+  const rutaStorage = `usuarios/${uid}/${archivo.name}`;
+  const storageRef = ref(storage, rutaStorage);
+
+  try {
+    await uploadBytes(storageRef, archivo);
+    const url = await getDownloadURL(storageRef);
+
+    // Guardar en Firestore
+    await setDoc(doc(db, "usuarios", uid, "archivos", archivo.name), {
+      nombre: archivo.name,
+      url: url,
+      fecha: new Date()
+    });
+
+    showSuccess("✅ Archivo PDF subido y vinculado al usuario.");
+    document.getElementById("archivoInput").value = ""; // Limpia input
+  } catch (error) {
+    console.error("Error al subir el PDF:", error);
+    showError("❌ Error al subir el PDF.");
   }
 };
 
