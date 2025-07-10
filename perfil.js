@@ -90,10 +90,12 @@ onAuthStateChanged(auth, async (user) => {
               <span class="info-label">Teléfono</span>
               <div class="info-value">${userData.telefono || "No especificado"}</div>
             </div>
-            <div class="info-item">
-              <span class="info-label">Archivo</span>
-              <div class="info-value">${userData.archivo || "No especificado"}</div>
-            </div>
+           <div class="info-item">
+            <span class="info-label">Archivo</span>
+            <button class="info-value" onclick="${userData.archivo ? 'window.open(\'' + userData.archivo + '\', \'_blank\')' : 'return false;'}" ${!userData.archivo ? 'disabled' : ''}>
+              ${userData.archivo ? 'Ver archivo' : 'No especificado'}
+            </button>
+          </div>
           </div>
         `;
 
