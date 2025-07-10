@@ -90,6 +90,10 @@ onAuthStateChanged(auth, async (user) => {
               <span class="info-label">Teléfono</span>
               <div class="info-value">${userData.telefono || "No especificado"}</div>
             </div>
+            <div class="info-item">
+              <span class="info-label">Archivo</span>
+              <div class="info-value">${userData.archivo || "No especificado"}</div>
+            </div>
           </div>
         `;
 
