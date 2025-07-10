@@ -163,38 +163,6 @@ window.actualizarUsuario = async () => {
   }
 };
 
-window.subirPDF = async () => {
-  const archivo = document.getElementById("archivoInput").files[0];
-  const uid = document.getElementById("uidInput").value.trim();
-
-  if (!archivo || !uid) {
-    showError("⚠️ Debes seleccionar un archivo PDF y tener un UID cargado.");
-    return;
-  }
-
-  const nombreArchivo = archivo.name;
-  const ruta = `usuarios/${uid}/${nombreArchivo}`;
-  const storageRef = ref(storage, ruta);
-
-  try {
-    await uploadBytes(storageRef, archivo);
-    const url = await getDownloadURL(storageRef);
-
-    await setDoc(doc(db, "usuarios", uid), {
-        archivoPDF: {
-          nombre: nombreArchivo,
-          url: url,
-          fecha: new Date()
-        }
-      }, { merge: true });
-
-    showSuccess("✅ PDF subido correctamente y vinculado al usuario.");
-    document.getElementById("archivoInput").value = ""; // Limpia el input
-  } catch (error) {
-    console.error("Error al subir PDF:", error);
-    showError("❌ Error al subir el PDF: " + error.message);
-  }
-};
 
 // Mostrar mensaje de éxito
 function showSuccess(message) {
